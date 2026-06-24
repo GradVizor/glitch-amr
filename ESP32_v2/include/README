@@ -1,0 +1,58 @@
+# Project Header Directories (`include/`)
+
+This folder contains all custom header declarations, hardware interfaces, and global configuration definitions for the ESP32 micro-ROS controller.
+
+---
+
+## 🗂️ Header File Directory
+
+### ⚙️ 1. [config.h](config.h)
+The central configuration dashboard of the robot firmware. All physical, electrical, and control loop parameters are stored here:
+* **Micro-ROS Configuration**: Sets serial/WiFi transport and baud rate.
+* **Robot Kinematics**: Stores physical properties like wheel base (\(0.200\text{ m}\)), wheel diameter (\(0.065\text{ m}\)), and encoder ticks per revolution (\(500.0\)).
+* **ESP32 Pins Mapping**: Maps PWM control lines to BTS7960, encoder interrupt channels, and IMU I2C buses.
+* **Closed-Loop PID Constants**: Sets PID gains (`PID_KP`, `PID_KI`, `PID_KD`) and target loop rate frequency (`MAIN_LOOP_FREQ` set to 20Hz).
+
+### 🔌 2. [motor_controller.h](motor_controller.h)    
+Defines the `MotorController` class interface for interfacing with the BTS7960 high-power motor drivers:
+* Wraps PWM signals generation.
+* Handles direction control by driving LPWM or RPWM while pulling the opposite pin low.
+* Expects input speed in range `[-255, 255]`.
+
+### 🧭 3. [encoder_driver.h](encoder_driver.h)
+Defines the static helper class `Encoders` to manage left/right quadrature encoders:
+* Tracks total ticks counted in background using ESP32 hardware interrupt routines (`CHANGE` triggers).
+* Provides tick differential calculation helper `Encoders::update()` to compute ticks elapsed between control frames.
+
+### 📐 4. [imu_driver.h](imu_driver.h)
+Declares the wrapper class `ImuDriver` interface for configuring and querying the IMU:
+* Built on top of the `MPU6500_WE` library.
+* Maps standard I2C channels and manages sensor calibration via `autoOffsets()`.
+* Handles internal conversion of raw sensor readings into standard ROS SI units: Accelerometer in meters per second squared (\(m/s^2\)) and Gyroscope in radians per second (\(rad/s\)).
+
+---
+
+## 🔁 How Headers Interact
+
+All driver files depend on `config.h` for pin mapping and physical coefficients:
+
+```
+                  +---------------+
+                  |   config.h    |
+                  +-------+-------+
+                          |
+      +-------------------+-------------------+
+      |                   |                   |
+      v                   v                   v
++-----+-----+       +-----+-----+       +-----+-----+
+|  motor_   |       | encoder_  |       |   imu_    |
+|controller |       |  driver   |       |  driver   |
++-----+-----+       +-----+-----+       +-----+-----+
+      |                   |                   |
+      +-------------------+-------------------+
+                          |
+                          v
+                    +-----+-----+
+                    | main.cpp  |
+                    +-----------+
+```

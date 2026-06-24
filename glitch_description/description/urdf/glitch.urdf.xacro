@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<robot name="glitch" xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- Base robot model -->
+  <xacro:include filename="$(find glitch_description)/description/urdf/robot.urdf.xacro" />
+  <xacro:include filename="$(find glitch_description)/description/urdf/rplidar.urdf.xacro" />
+
+  <!-- Mechanical properties -->
+  <xacro:property name="rplidar_x_offset"              value="${0.393584*cm2m}"/>
+  <xacro:property name="rplidar_y_offset"              value="${0*cm2m}"/>
+  <xacro:property name="rplidar_z_offset"              value="${7.529272*cm2m}"/>
+
+  <!-- glitch sensor definitions -->
+  <xacro:rplidar name="rplidar" parent_link="base_link" gazebo="$(arg gazebo)">
+    <origin xyz="${rplidar_x_offset} ${rplidar_y_offset} ${rplidar_z_offset + base_link_z_offset}"
+            rpy="0 0 ${pi/2}"/>
+  </xacro:rplidar>
+
+  <!-- Base footprint for navigation -->
+  <link name="base_footprint" />
+  <joint name="base_footprint_joint" type="fixed">
+    <!-- Create3's base_link is already on the ground -->
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="base_footprint" />
+  </joint>
+</robot>
