@@ -3,7 +3,9 @@
 # @author Rodrigo Jose Causarano Nunez (rcausaran@irobot.com)
 #
 # Launch Create(R) 3 nodes
-# @author Reishabh Rathore (reishabhrathore2003@gmail.com)
+# Modified by Reishabh Rathore <reishabhrathore2003@gmail.com> (2026)
+
+import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
@@ -29,7 +31,10 @@ def generate_launch_description():
     
     # Paths
     control_launch_file = PathJoinSubstitution(
-        [pkg_glitch_control, 'src', 'control.py'])
+        [pkg_glitch_control, 'launch', 'control.launch.py'])
+    
+    ekf_config_path = PathJoinSubstitution(
+        [pkg_glitch_control, 'config', 'ekf.yaml'])
 
     # Includes
     diffdrive_controller = IncludeLaunchDescription(
@@ -52,6 +57,35 @@ def generate_launch_description():
             ('/tf_static', 'tf_static')
         ]
     )
+    
+    # micro-ROS Serial Agent Node
+    # Automatically manages connection to the ESP32 via USB
+    microros_agent_node = Node(
+        package='micro_ros_agent',
+        executable='micro_ros_agent',
+        name='micro_ros_agent',
+        output='screen',
+        arguments=['serial', '--dev', '/dev/ttyUSB0', '-b', '115200']
+    )
+    
+    # EKF Local Localization Node
+    ekf_node = Node(
+        package='robot_localization',
+        executable='ekf_node',
+        name='ekf_filter_node',
+        output='screen',
+        parameters=[ekf_config_path]
+    )
+    
+    # Static Transform: base_link -> imu_link
+    # EKF needs to know the geometric position of the IMU relative to the center of the wheels.
+    # Arguments: x, y, z, yaw, pitch, roll, parent_frame, child_frame (adjust x,y,z if needed)
+    static_tf_imu = Node(
+        package='tf2_ros',
+        executable='static_transform_publisher',
+        name='base_link_to_imu_link',
+        arguments=['0.0', '0.0', '0.05', '0.0', '0.0', '0.0', 'base_link', 'imu_link']
+    )
 
 
     # Define LaunchDescription variable
@@ -59,4 +93,7 @@ def generate_launch_description():
     # Include robot description
     ld.add_action(diffdrive_controller)
     ld.add_action(motion_control_node)
+    ld.add_action(ekf_node)
+    ld.add_action(static_tf_imu)
+    ld.add_action(microros_agent_node)
     return ld
