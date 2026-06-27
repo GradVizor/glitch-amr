@@ -3,11 +3,20 @@
 <package format="3">
   <name>glitch_bringup</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Glitch robot hardware bringup and robot nodes launch package</description>
   <maintainer email="reishabhrathore2003@gmail.com">reishabh</maintainer>
-  <license>TODO: License declaration</license>
+  <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- GLITCH -->
+  <depend>glitch_control</depend>
+  <depend>glitch_nodes</depend>
+
+  <!-- ROS -->
+  <depend>robot_localization</depend>
+  <depend>micro_ros_agent</depend>
+  <depend>tf2_ros</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

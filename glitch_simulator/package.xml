@@ -3,11 +3,18 @@
 <package format="3">
   <name>glitch_simulator</name>
   <version>0.0.0</version>
-  <description>TODO: Package description</description>
+  <description>Glitch Robot Simulator bringup package</description>
   <maintainer email="reishabhrathore2003@gmail.com">reishabh</maintainer>
-  <license>TODO: License declaration</license>
+  <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- GLITCH -->
+  <depend>glitch_description</depend>
+  <depend>glitch_bringup</depend>
+
+  <!-- ROS IGN -->
+  <depend>ros_ign_gazebo</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>
