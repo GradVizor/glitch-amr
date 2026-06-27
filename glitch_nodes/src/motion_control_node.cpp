@@ -1,5 +1,6 @@
 // Copyright 2026 iRobot Corporation. All Rights Reserved.
-// @author Reishabh Rathore (reishabhrathore2003@gmail.com)
+// @author Alberto Soragna (asoragna@irobot.com)
+// Modified by Reishabh Rathore <reishabhrathore2003@gmail.com> (2026)
 
 #include <algorithm>
 #include <memory>

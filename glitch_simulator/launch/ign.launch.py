@@ -13,7 +13,7 @@
 # limitations under the License.
 #
 # @author Roni Kreinin (rkreinin@clearpathrobotics.com)
-# @author Reishabh Rathore (reishabhrathore2003@gmail.com)
+# Modified by Reishabh Rathore <reishabhrathore2003@gmail.com> (2026)
 
 import os
 

@@ -13,13 +13,11 @@
 # limitations under the License.
 #
 # @author Roni Kreinin (rkreinin@clearpathrobotics.com)
-# @author Reishabh Rathore (reishabhrathore2003@gmail.com)
+# Modified by Reishabh Rathore <reishabhrathore2003@gmail.com> (2026)
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.substitutions import LaunchConfiguration
-# from launch.substitutions.path_join_substitution import PathJoinSubstitution
-
+from launch.substitutions import launch_configuration
 from launch_ros.actions import Node
 
 ARGUMENTS = [
