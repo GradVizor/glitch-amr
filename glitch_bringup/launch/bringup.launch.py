@@ -12,9 +12,14 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.conditions import UnlessCondition
 from launch_ros.actions import Node
 
 ARGUMENTS = [
+    # Defaults to 'false' for physical hardware. Pass 'true' when launching simulation.
+    DeclareLaunchArgument('use_sim_time', default_value='false',
+                          choices=['true', 'false'],
+                          description='Use simulation clock if true'),
     DeclareLaunchArgument('gazebo', default_value='classic',
                           choices=['classic', 'ignition'],
                           description='Which gazebo simulator to use'),
@@ -24,6 +29,10 @@ ARGUMENTS = [
 
 
 def generate_launch_description():
+    
+    # Configurations
+    use_sim_time = LaunchConfiguration('use_sim_time')
+    namespace = LaunchConfiguration('namespace')
 
     # Directories
     pkg_glitch_control = get_package_share_directory('glitch_control')
@@ -65,7 +74,9 @@ def generate_launch_description():
         executable='micro_ros_agent',
         name='micro_ros_agent',
         output='screen',
-        arguments=['serial', '--dev', '/dev/ttyUSB0', '-b', '115200']
+        arguments=['serial', '--dev', '/dev/ttyUSB0', '-b', '115200'],
+        parameters=[{'use_sim_time': use_sim_time}],
+        condition=UnlessCondition(use_sim_time)
     )
     
     # EKF Local Localization Node
@@ -74,7 +85,12 @@ def generate_launch_description():
         executable='ekf_node',
         name='ekf_filter_node',
         output='screen',
-        parameters=[ekf_config_path]
+        parameters=[
+            ekf_config_path,
+            {'use_sim_time': use_sim_time}
+        ],
+        # This node will not launch if use_sim_time is true
+        condition=UnlessCondition(use_sim_time)
     )
     
     # Static Transform: base_link -> imu_link
@@ -84,7 +100,10 @@ def generate_launch_description():
         package='tf2_ros',
         executable='static_transform_publisher',
         name='base_link_to_imu_link',
-        arguments=['0.0', '0.0', '0.05', '0.0', '0.0', '0.0', 'base_link', 'imu_link']
+        arguments=['0.0', '0.0', '0.05', '0.0', '0.0', '0.0', 'base_link', 'imu_link'],
+            parameters=[{'use_sim_time': use_sim_time}],
+        # This node will not launch if use_sim_time is true
+        condition=UnlessCondition(use_sim_time)
     )
 
 
