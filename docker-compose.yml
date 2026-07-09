@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  amr_dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: glitch_amr:latest
+    container_name: glitch_amr_container
+    
+    # Use host network so ROS2 nodes can communicate seamlessly with external tools/hosts
+    network_mode: host
+    ipc: host
+    pid: host
+    
+    # OPTIONAL: Uncomment the line below if you plan to connect physical hardware 
+    # (e.g., USB LiDARs, Joysticks, Arduino/ESP32, Depth Cameras) to your system.
+    # privileged: true
+    
+    environment:
+      - DISPLAY=${DISPLAY}
+      - QT_X11_NO_MITSHM=1
+      # Enables Nvidia container runtime to pass graphics and computing layers
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=all,graphics,utility,compute
+      # Automatically pass display authentication to prevent "Cannot open display" errors
+      - XAUTHORITY=/tmp/.docker.xauth
+      
+    volumes:
+      # Mount the current directory so code changes on the host instantly sync to the container
+      - .:/ros2_ws/src/glitch-amr
+      
+      # Share the host's display socket for GUI programs (Gazebo, RViz)
+      - /tmp/.X11-unix:/tmp/.X11-unix:rw
+      
+      # Mount the host Xauthority file so the container is authorized to draw on your screen
+      - ${XAUTHORITY:-~/.Xauthority}:/tmp/.docker.xauth:rw
+      
+    # Support for Intel & AMD Integrated Graphics Card acceleration (Safe to leave enabled)
+    devices:
+      - /dev/dri:/dev/dri
+      
+    # For Nvidia Dedicated Graphics Cards:
+    # If you or your users are running an Nvidia GPU, uncomment this "deploy" block.
+    # (Leaving it commented prevents Docker Compose from crashing on machines running Intel/AMD only).
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: all
+    #           capabilities: [gpu]
+              
+    stdin_open: true
+    tty: true
