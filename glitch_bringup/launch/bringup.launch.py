@@ -89,6 +89,10 @@ def generate_launch_description():
             ekf_config_path,
             {'use_sim_time': use_sim_time}
         ],
+        # Remap EKF output so downstream nodes can subscribe to /odom in both sim and hardware
+        remappings=[
+            ('/odometry/filtered', '/odom')
+        ],
         # This node will not launch if use_sim_time is true
         condition=UnlessCondition(use_sim_time)
     )
