@@ -20,12 +20,23 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.actions import IncludeLaunchDescription, DeclareLaunchArgument
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import PathJoinSubstitution
+# Added LaunchConfiguration here to read the launch arguments dynamically
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 
 
 def generate_launch_description():
     pkg_nav2_bringup = get_package_share_directory('nav2_bringup')
     pkg_glitch_navigation = get_package_share_directory('glitch_navigation')
+    
+    # 1. Declare the 'use_sim_time' launch argument
+    use_sim_time_arg = DeclareLaunchArgument(
+        'use_sim_time',
+        default_value='true', # Defaults to true for simulation
+        description='Use simulation (Gazebo) clock if true, otherwise use system clock'
+    )
+    
+    # 2. Assign the LaunchConfiguration variable
+    use_sim_time = LaunchConfiguration('use_sim_time')
     
     nav2_params = PathJoinSubstitution(
         [pkg_glitch_navigation, 'config', 'nav2_params.yaml'])
@@ -36,17 +47,20 @@ def generate_launch_description():
     nav2_bringup = PathJoinSubstitution(
         [pkg_nav2_bringup, 'launch', 'bringup_launch.py'])
     
-
-    nav2 = LaunchDescription([
-        IncludeLaunchDescription(
-            PythonLaunchDescriptionSource([nav2_bringup]),
-            launch_arguments={
-            'map':map_file,
+    # 3. Include nav2 bringup and pass 'use_sim_time' dynamically
+    nav2 = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource([nav2_bringup]),
+        launch_arguments={
+            'map': map_file,
             'params_file': nav2_params,
-            'use_sim_time': 'True'}.items()
-        )
-    ])
-    ld = LaunchDescription()
-    ld.add_action(nav2)
-    return ld
+            'use_sim_time': use_sim_time # Dynamically mapped
+        }.items()
+    )
     
+    ld = LaunchDescription()
+    
+    # 4. Add the declared argument and nav2 action to the LaunchDescription
+    ld.add_action(use_sim_time_arg)
+    ld.add_action(nav2)
+    
+    return ld
