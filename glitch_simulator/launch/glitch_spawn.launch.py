@@ -60,7 +60,7 @@ def generate_launch_description():
     robot_description_launch = PathJoinSubstitution(
         [pkg_glitch_description, 'launch', 'robot_description.launch.py'])
     robot_nodes_launch = PathJoinSubstitution(
-        [pkg_glitch_bringup, 'launch', 'bringup.launch.py'])
+        [pkg_glitch_bringup, 'launch', 'bringup_sim.launch.py'])
 
     # Launch configurations
     namespace = LaunchConfiguration('namespace')
