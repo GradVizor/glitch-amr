@@ -85,7 +85,7 @@
 
 1. **ESP32** reads encoders and IMU, computes wheel velocities and raw odometry
 2. **micro-ROS Agent** serializes data over USB and publishes to ROS 2 topics
-3. **EKF Node** fuses wheel velocities and IMU yaw rates into `/odometry/filtered`
+3. **EKF Node** fuses wheel velocities and IMU yaw rates into `/odometry/filtered` (remapped to `/odom`)
 4. **Nav2 Stack** consumes filtered odometry for autonomous navigation
 
 ---
@@ -98,6 +98,7 @@
 | **Motor Drivers** | 2× BTS7960B H-Bridge |
 | **Motors** | DC gearmotors with quadrature encoders |
 | **IMU** | MPU6050 / MPU6500 (I2C @ 0x68) |
+| **2D-LiDAR** | RPLiDAR A2M8 |
 | **Communication** | USB Serial @ 115200 baud |
 | **Control Frequency** | 20 Hz main loop |
 
@@ -151,8 +152,9 @@ glitch-amr/
 │
 ├── glitch_bringup/              # Hardware launch & system bringup
 │   ├── launch/
-│   │   └── bringup.launch.py    # Main launch file (hardware mode)
-│   └── package.xml
+│   │   ├── bringup_real.launch.py    # Main launch file (real mode)
+│   │   ├── bringup_sim.launch.py    # Main launch file (sim mode)
+│   │   └── rplidar_a2m8_launch.py  # RPLidar Launch file 
 │
 ├── glitch_control/              # Control configuration
 │   ├── config/
@@ -170,6 +172,7 @@ glitch-amr/
 │   │   └── model.rviz           # Model-only RViz config
 │   └── launch/
 │       ├── robot_description.launch.py
+│       ├── view_navigation.launch.py   # RViz launch to visualize navigation
 │       └── view_robot.launch.py
 │
 ├── glitch_navigation/           # SLAM & Nav2 configurations
@@ -179,6 +182,7 @@ glitch-amr/
 │   │   └── localization.yaml    # AMCL parameters
 │   ├── launch/
 │   │   ├── navigation.launch.py # Nav2 bringup
+│   │   ├── nav2.launch.py       # Custom Nav2 bringup
 │   │   ├── slam.launch.py       # SLAM launch
 │   │   └── localization.launch.py
 │   └── maps/
@@ -188,15 +192,19 @@ glitch-amr/
 │   └── src/
 │       └── motion_control_node.cpp  # Safety & motion control
 │
-└── glitch_simulator/            # Gazebo simulation
-    ├── launch/
-    │   ├── glitch_ign.launch.py     # Ignition Gazebo launch
-    │   ├── glitch_spawn.launch.py   # Robot spawn in simulation
-    │   └── ros_ign_bridge.launch.py # ROS-Ignition bridge
-    └── worlds/
-        └── warehouse.sdf           # Simulation world
+├── glitch_simulator/                # Gazebo simulation
+│   ├── launch/                      # Ignition Gazebo launch
+│   │   ├── glitch_ign.launch.py     # Gazebo sim & robot launch 
+│   │   ├── glitch_spawn.launch.py   # Robot spawn in simulation    
+│   │   ├── ign.launch.py            # Gazebo sim launch 
+│   │   └── ros_ign_bridge.launch.py # ROS-Ignition bridge
+│   └── worlds/
+│       └── warehouse.sdf           # Simulation world
 │
-└── resources/                   # Contains resources of this project 
+└── resources/                   # Documentation & setup guides
+    ├── DOCKER_GUIDE.md          # Docker setup instructions
+    ├── USB_SETUP.md             # USB port configuration guide
+    └── glitch-amr.jpeg          # Project image
 ```
 
 ---
@@ -244,17 +252,15 @@ pio device monitor
 
 ### Hardware Setup
 
-1. **Wire the robot** according to the pinout table above
-2. **Flash the ESP32** with the firmware from `ESP32_v2/`
-3. **Connect ESP32** to the SBC via USB (typically `/dev/ttyUSB0`)
-4. **Launch the robot**:
+1. **Wire the robot** according to the pinout table in the [Hardware Specifications](#hardware-specifications) section
+2. **Flash the ESP32** with the firmware from `ESP32_v2/` (see [ESP32_v2/README.md](ESP32_v2/README.md) for details)
+3. **Configure USB ports** for stable device mapping (see [USB Port Configuration](resources/USB_SETUP.md))
+4. **Connect ESP32** to the SBC via USB
+5. **Launch the robot**:
 
 ```bash
 # Real hardware mode (use_sim_time:=false)
-ros2 launch glitch_bringup bringup.launch.py
-
-# With custom namespace
-ros2 launch glitch_bringup bringup.launch.py use_sim_time:=false
+ros2 launch glitch_bringup bringup_real.launch.py
 ```
 
 ### Simulation
@@ -277,7 +283,11 @@ ros2 launch glitch_navigation slam.launch.py
 < Need to be added soon >
 
 # Start Nav2 navigation (requires a map)
-ros2 launch glitch_navigation navigation.launch.py
+# For hardware setup add " use_sim_time:=False " at the end
+ros2 launch glitch_navigation navigation.launch.py use_sim_time:=True
+
+# To visualize mapping and navigation :-
+ros2 launch glitch_description view_navigation.launch.py
 ```
 
 ---
@@ -316,7 +326,11 @@ odom
 
 ## ⚙️ Configuration
 
-### ESP32 Parameters (`ESP32_v2/include/config.h`)
+### ESP32 Parameters
+
+For detailed ESP32 configuration and tuning, see [ESP32_v2/README.md](ESP32_v2/README.md).
+
+Key parameters in `ESP32_v2/include/config.h`:
 
 ```cpp
 // Physical constants
@@ -397,15 +411,12 @@ For questions, issues, or collaborations:
 
 ---
 
-## 🗺️ Roadmap
+## 📚 Additional Documentation
 
-- [ ] Full Nav2 stack integration and testing
-- [ ] Add additional sensor support (LiDAR, depth camera)
-- [ ] Implement autonomous charging station navigation
-- [ ] Multi-robot coordination support
-- [ ] Web-based teleoperation interface
-- [ ] Docker deployment for easy setup
+- **[ESP32 Firmware Guide](ESP32_v2/README.md)** - Detailed documentation for ESP32 firmware, including hardware wiring, ROS 2 interface, and control loop tuning
+- **[Docker Setup Guide](resources/DOCKER_GUIDE.md)** - Complete Docker installation and deployment instructions
+- **[USB Port Configuration](resources/USB_SETUP.md)** - Persistent USB port mapping for ESP32 and RPLIDAR
 
 ---
 
-*Last updated: June 2026*
+*Last updated: July 2026*
